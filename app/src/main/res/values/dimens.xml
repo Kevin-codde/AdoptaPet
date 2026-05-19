@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app/src/main/res/values/dimens.xml -->
+<!-- Dimensiones globales reutilizables en toda la app -->
+<resources>
+    <!-- Padding estándar -->
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_large">24dp</dimen>
+    <dimen name="padding_xlarge">32dp</dimen>
+
+    <!-- Bordes redondeados -->
+    <dimen name="card_corner_radius">16dp</dimen>
+    <dimen name="button_corner_radius">12dp</dimen>
+    <dimen name="badge_corner_radius">20dp</dimen>
+    <dimen name="image_corner_radius">12dp</dimen>
+
+    <!-- Elevación de tarjetas -->
+    <dimen name="card_elevation">4dp</dimen>
+    <dimen name="bottom_nav_elevation">8dp</dimen>
+
+    <!-- Tamaños de foto -->
+    <dimen name="pet_photo_height_list">200dp</dimen>
+    <dimen name="pet_photo_height_detail">280dp</dimen>
+    <dimen name="pet_photo_thumbnail">72dp</dimen>
+    <dimen name="profile_photo_size">88dp</dimen>
+
+    <!-- Textos -->
+    <dimen name="text_title">26sp</dimen>
+    <dimen name="text_headline">18sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+    <dimen name="text_caption">13sp</dimen>
+    <dimen name="text_small">12sp</dimen>
+
+    <!-- Iconos -->
+    <dimen name="icon_size_small">24dp</dimen>
+    <dimen name="icon_size_medium">48dp</dimen>
+    <dimen name="icon_size_large">80dp</dimen>
+</resources>

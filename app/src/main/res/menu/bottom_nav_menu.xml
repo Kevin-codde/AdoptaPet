@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app/src/main/res/menu/bottom_nav_menu.xml -->
+<!-- Menú del BottomNavigationView con las 3 secciones principales -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Sección Inicio: lista de mascotas disponibles -->
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="@string/nav_home" />
+
+    <!-- Sección Publicar: subir nueva mascota (requiere auth) -->
+    <item
+        android:id="@+id/publishFragment"
+        android:icon="@drawable/ic_add_circle"
+        android:title="@string/nav_publish" />
+
+    <!-- Sección Perfil: datos del usuario y mascotas propias -->
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/ic_person"
+        android:title="@string/nav_profile" />
+
+</menu>
