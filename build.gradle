@@ -1,0 +1,30 @@
+// build.gradle (Project level)
+// AdoptaPet - Archivo de configuración raíz del proyecto
+
+buildscript {
+    ext.kotlin_version = "1.9.22"
+
+    // Se eliminó el bloque repositories de aquí porque ahora se gestiona en settings.gradle
+    // Solo añade esto si el settings.gradle no lo resuelve solo
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // Plugin de servicios de Google para Firebase
+        classpath 'com.google.gms:google-services:4.4.1'
+        // Safe Args para navegación tipada
+        classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.7.6'
+    }
+}
+
+// No se incluyen repositorios en allprojects para evitar conflictos con settings.gradle
+allprojects {
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
