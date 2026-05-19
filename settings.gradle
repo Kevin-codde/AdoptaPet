@@ -1,0 +1,21 @@
+// settings.gradle - AdoptaPet
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    // Esto obliga a que todos los módulos usen estos repositorios
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "AdoptaPet"
+include ':app'
