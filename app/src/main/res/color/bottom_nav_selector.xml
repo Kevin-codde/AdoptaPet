@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app/src/main/res/color/bottom_nav_selector.xml -->
+<!-- Selector de color para ítems del BottomNavigationView -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/primary" android:state_checked="true" />
+    <item android:color="@color/bottom_nav_unselected" />
+</selector>
