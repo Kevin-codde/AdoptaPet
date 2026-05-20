@@ -1,92 +1,124 @@
-// app/src/main/java/com/adoptapet/app/ui/detail/DetailFragment.kt
-// Fragment de detalle de una mascota
-
-package com.adoptapet.app.ui.detail
-
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
-import coil.load
-import com.adoptapet.app.data.local.AppDatabase
-import com.adoptapet.app.data.model.Pet
-import com.adoptapet.app.data.repository.PetRepository
-import com.adoptapet.app.databinding.FragmentDetailBinding
-import com.adoptapet.app.ui.contracts.DetailContract
-import com.adoptapet.app.ui.presenter.DetailPresenter
-
 /**
- * Fragment de detalle de mascota.
- * Recibe el petId via Safe Args desde HomeFragment.
+ * Fragment encargado de mostrar el detalle de una mascota.
+ * Implementa la interfaz DetailContract.View.
  */
 class DetailFragment : Fragment(), DetailContract.View {
 
+    // Referencia al binding del layout.
     private var _binding: FragmentDetailBinding? = null
+
+    // Acceso seguro al binding.
     private val binding get() = _binding!!
 
+    // Presenter que contiene la lógica de negocio.
     private lateinit var presenter: DetailPresenter
 
-    // Argumentos de navegación tipados (Safe Args)
+    // Argumentos recibidos mediante Safe Args.
     private val args: DetailFragmentArgs by navArgs()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    /**
+     * Infla el layout del fragment.
+     */
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentDetailBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    /**
+     * Inicializa el Presenter y carga el detalle de la mascota.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Obtiene la instancia de la base de datos.
         val db = AppDatabase.getDatabase(requireContext())
-        presenter = DetailPresenter(this, PetRepository(db.petDao()))
 
-        // Cargar detalle de la mascota con el ID recibido
+        // Inicializa el Presenter con el repositorio.
+        presenter = DetailPresenter(
+            this,
+            PetRepository(db.petDao())
+        )
+
+        // Carga la mascota usando el ID recibido.
         presenter.loadPetDetail(args.petId)
     }
 
-    // ─── DetailContract.View ──────────────────────────────────────────────
-
+    /**
+     * Muestra u oculta el indicador de carga.
+     */
     override fun showLoading(show: Boolean) {
-        // El layout de detalle no tiene ProgressBar explícito; podría añadirse
+        // No se implementa porque este layout no tiene ProgressBar.
     }
 
+    /**
+     * Muestra la información detallada de la mascota.
+     */
     override fun showPetDetail(pet: Pet) {
         with(binding) {
+
+            // Muestra el nombre de la mascota.
             tvDetailName.text = pet.name
+
+            // Muestra el tipo con la primera letra en mayúscula.
             tvDetailType.text = pet.type.replaceFirstChar { it.uppercase() }
+
+            // Muestra la edad de la mascota.
             tvDetailAge.text = pet.age
+
+            // Muestra la descripción.
             tvDetailDescription.text = pet.description
+
+            // Muestra la información de contacto.
             tvDetailContact.text = pet.contactInfo
+
+            // Muestra el nombre del propietario.
             tvDetailOwner.text = "Publicado por: ${pet.ownerName}"
 
+            // Verifica si existe una foto.
             if (pet.photoUrl.isNotEmpty()) {
+
+                // Carga la imagen con Coil.
                 ivDetailPhoto.load(pet.photoUrl) {
                     crossfade(true)
                     placeholder(com.adoptapet.app.R.drawable.ic_paw_placeholder)
                     error(com.adoptapet.app.R.drawable.ic_paw_placeholder)
                 }
             } else {
-                ivDetailPhoto.setImageResource(com.adoptapet.app.R.drawable.ic_paw_placeholder)
+
+                // Muestra imagen por defecto.
+                ivDetailPhoto.setImageResource(
+                    com.adoptapet.app.R.drawable.ic_paw_placeholder
+                )
             }
 
+            // Solicita la adopción al presionar el botón.
             btnRequestAdoption.setOnClickListener {
                 presenter.onRequestAdoption(pet)
             }
         }
     }
 
+    /**
+     * Muestra un mensaje de error y regresa a la pantalla anterior.
+     */
     override fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            requireContext(),
+            message,
+            Toast.LENGTH_LONG
+        ).show()
+
         findNavController().popBackStack()
     }
 
+    /**
+     * Muestra la información de contacto en un diálogo.
+     */
     override fun showContactInfo(contactInfo: String) {
-        // Mostrar información de contacto en un diálogo
         AlertDialog.Builder(requireContext())
             .setTitle("Información de contacto")
             .setMessage(contactInfo)
@@ -94,9 +126,16 @@ class DetailFragment : Fragment(), DetailContract.View {
             .show()
     }
 
+    /**
+     * Libera recursos al destruir la vista.
+     */
     override fun onDestroyView() {
         super.onDestroyView()
+
+        // Libera la referencia del Presenter.
         presenter.onDestroy()
+
+        // Libera el binding para evitar fugas de memoria.
         _binding = null
     }
 }
