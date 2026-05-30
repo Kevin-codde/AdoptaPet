@@ -14,6 +14,7 @@ import androidx.room.PrimaryKey
  * @param name         Nombre de la mascota
  * @param type         Tipo: "perro", "gato" u "otro"
  * @param age          Edad aproximada (ej: "2 años", "6 meses")
+ * @param city         Ciudad donde se encuentra la mascota
  * @param description  Descripción completa de la mascota
  * @param contactInfo  Información de contacto del responsable
  * @param photoUrl     URL de la foto en Firebase Storage (o vacío si no hay)
@@ -28,6 +29,7 @@ data class Pet(
     val name: String = "",
     val type: String = "",
     val age: String = "",
+    val city: String = "", // <-- Propiedad integrada con éxito
     val description: String = "",
     val contactInfo: String = "",
     val photoUrl: String = "",
@@ -44,6 +46,7 @@ data class Pet(
         "name" to name,
         "type" to type,
         "age" to age,
+        "city" to city, // <-- Mapeado a la base remota
         "description" to description,
         "contactInfo" to contactInfo,
         "photoUrl" to photoUrl,
@@ -62,6 +65,7 @@ data class Pet(
             name = map["name"] as? String ?: "",
             type = map["type"] as? String ?: "",
             age = map["age"] as? String ?: "",
+            city = map["city"] as? String ?: "", // <-- Recuperado de forma segura
             description = map["description"] as? String ?: "",
             contactInfo = map["contactInfo"] as? String ?: "",
             photoUrl = map["photoUrl"] as? String ?: "",

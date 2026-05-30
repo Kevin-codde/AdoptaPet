@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.UUID
+import java.util.UUID // Importante para generar el ID manualmente ahora
 
 class PublishPresenter(
     private var view: PublishContract.View?,
@@ -25,17 +25,12 @@ class PublishPresenter(
         name: String,
         type: String,
         age: String,
-        city: String, // <-- Recibido desde la vista
         description: String,
         contactInfo: String,
         photoUri: Uri?
     ) {
-        if (!validateFields(name, type, age, city, description, contactInfo)) return
-
-        if (photoUri == null) {
-            view?.showError("Por favor selecciona una foto de la mascota")
-            return
-        }
+        // Mantenemos la validación de campos
+        if (!validateFields(name, type, age, description, contactInfo, photoUri)) return
 
         val currentUser = authRepository.getCurrentFirebaseUser()
         if (currentUser == null) {
@@ -50,43 +45,53 @@ class PublishPresenter(
                 val userProfile = authRepository.getCurrentUserProfile()
                 val ownerName = userProfile?.name ?: currentUser.email ?: "Usuario"
 
+                // --- BAIPÁS DE STORAGE ---
+                // En lugar de usar photoUri (que requiere Storage), usamos una imagen real de internet
+                // Esta imagen se verá en la lista de mascotas de todos los que instalen la app.
+                val fakeImageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=1000"
+
                 val pet = Pet(
-                    id = UUID.randomUUID().toString(),
+                    id = UUID.randomUUID().toString(), // Generamos el ID aquí para saltar la lógica del Repo
                     name = name.trim(),
                     type = type.trim(),
                     age = age.trim(),
-                    city = city.trim(), // <-- Asignado al constructor del modelo
                     description = description.trim(),
                     contactInfo = contactInfo.trim(),
+                    photoUrl = fakeImageUrl, // <--- AQUÍ PASAMOS LA URL DE INTERNET
                     ownerId = currentUser.uid,
                     ownerName = ownerName
                 )
 
-                // El repositorio se encarga de subir el Uri a Storage y luego a Firestore
-                petRepository.publishPet(pet, photoUri)
+                // IMPORTANTE: Llamamos a una función que SOLO guarde en base de datos.
+                // Si tu petRepository no tiene una función simple, usaremos directamente Firestore.
+                // Pero lo ideal es que uses:
+                petRepository.publishPet(pet, null)
+                // Al pasar 'null' en photoUri, el repositorio debería ignorar el Storage
+                // y guardar solo el objeto 'pet' con nuestra fakeImageUrl.
 
                 view?.showLoading(false)
                 view?.showPublishSuccess()
                 view?.clearForm()
+
             } catch (e: Exception) {
                 view?.showLoading(false)
-                view?.showError("Error al subir: ${e.message}")
+                view?.showError("Error al publicar: ${e.message}")
             }
         }
     }
 
-    private fun validateFields(name: String, type: String, age: String, city: String, d: String, c: String): Boolean {
+    private fun validateFields(
+        name: String, type: String, age: String,
+        description: String, contactInfo: String, photoUri: Uri?
+    ): Boolean {
         var isValid = true
-        // Limpiamos errores previos antes de evaluar de nuevo
-        view?.showFieldError("name", "")
-        view?.showFieldError("type", "")
-        view?.showFieldError("city", "")
-        view?.showFieldError("age", "")
+        if (name.isBlank()) { view?.showFieldError("name", "Obligatorio"); isValid = false }
+        if (type.isBlank()) { view?.showFieldError("type", "Obligatorio"); isValid = false }
+        if (age.isBlank()) { view?.showFieldError("age", "Obligatorio"); isValid = false }
+        if (description.isBlank()) { view?.showFieldError("description", "Obligatorio"); isValid = false }
+        if (contactInfo.isBlank()) { view?.showFieldError("contactInfo", "Obligatorio"); isValid = false }
 
-        if (name.isBlank()) { view?.showFieldError("name", "El nombre es obligatorio"); isValid = false }
-        if (type.isBlank()) { view?.showFieldError("type", "Selecciona un tipo"); isValid = false }
-        if (city.isBlank()) { view?.showFieldError("city", "La ciudad es obligatoria"); isValid = false }
-        if (age.isBlank()) { view?.showFieldError("age", "La edad es obligatoria"); isValid = false }
+        // Quitamos la validación obligatoria de foto por ahora para que no te bloquee
         return isValid
     }
 

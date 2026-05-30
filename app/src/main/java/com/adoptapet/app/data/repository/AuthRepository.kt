@@ -16,6 +16,7 @@ import kotlinx.coroutines.tasks.await
  * Operaciones soportadas:
  * - Registro con email/password
  * - Login con email/password
+ * - Recuperación de contraseña mediante email
  * - Cierre de sesión
  * - Obtener usuario autenticado actual
  * - Obtener perfil del usuario desde Firestore
@@ -125,6 +126,18 @@ class AuthRepository(
     suspend fun getCurrentUserProfile(): User? {
         val uid = auth.currentUser?.uid ?: return null
         return getUserProfile(uid)
+    }
+
+    // ─── Recuperación de contraseña ──────────────────────────────────────────
+
+    /**
+     * Envía un correo electrónico de restablecimiento de contraseña a través de Firebase Auth.
+     *
+     * @param email Correo electrónico del usuario.
+     * @throws Exception si el correo no está registrado o hay un error de red.
+     */
+    suspend fun sendPasswordResetEmail(email: String) {
+        auth.sendPasswordResetEmail(email).await()
     }
 
     // ─── Logout ──────────────────────────────────────────────────────────────
