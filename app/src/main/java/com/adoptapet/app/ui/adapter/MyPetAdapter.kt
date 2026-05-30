@@ -23,9 +23,7 @@ import com.adoptapet.app.databinding.ItemMyPetBinding
 class MyPetAdapter(
     private val onDeleteClick: (Pet) -> Unit
 ) : ListAdapter<Pet, MyPetAdapter.MyPetViewHolder>(MyPetDiffCallback()) {
-    /**
-     * Crea la vista de cada elemento usando el layout item_my_pet.xml.
-     */
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyPetViewHolder {
         val binding = ItemMyPetBinding.inflate(
             LayoutInflater.from(parent.context),
@@ -34,9 +32,7 @@ class MyPetAdapter(
         )
         return MyPetViewHolder(binding)
     }
-    /**
-     * ViewHolder que administra los componentes visuales de cada mascota.
-     */
+
     override fun onBindViewHolder(holder: MyPetViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
@@ -44,9 +40,7 @@ class MyPetAdapter(
     inner class MyPetViewHolder(
         private val binding: ItemMyPetBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        /**
-         * Carga los datos de la mascota en la interfaz.
-         */
+
         fun bind(pet: Pet) {
             with(binding) {
                 tvMyPetName.text = pet.name
@@ -70,9 +64,7 @@ class MyPetAdapter(
             }
         }
     }
-    /**
-     * Compara elementos de la lista para actualizar solo los cambios necesarios.
-     */
+
     class MyPetDiffCallback : DiffUtil.ItemCallback<Pet>() {
         override fun areItemsTheSame(oldItem: Pet, newItem: Pet) = oldItem.id == newItem.id
         override fun areContentsTheSame(oldItem: Pet, newItem: Pet) = oldItem == newItem

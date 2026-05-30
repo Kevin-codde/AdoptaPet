@@ -1,91 +1,65 @@
-/**
- * Actividad principal de la aplicación.
- * Contiene la navegación entre los fragments mediante Navigation Component.
- */
+package com.adoptapet.app.ui.main
+
+import android.content.Intent
+import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
+import com.adoptapet.app.R
+import com.adoptapet.app.data.repository.AuthRepository
+import com.adoptapet.app.databinding.ActivityMainBinding
+import com.adoptapet.app.ui.auth.AuthActivity
+
 class MainActivity : AppCompatActivity() {
 
-    // Referencia al binding del layout principal.
     private var _binding: ActivityMainBinding? = null
-
-    // Acceso seguro al binding.
     private val binding get() = _binding!!
-
-    // Controlador de navegación.
     private lateinit var navController: NavController
 
-    /**
-     * Inicializa la actividad y verifica si existe una sesión activa.
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Crea una instancia del repositorio de autenticación.
         val authRepo = AuthRepository()
 
-        // Verifica si el usuario ha iniciado sesión.
+        // Si no está logueado, salir de inmediato y no ejecutar nada más
         if (!authRepo.isUserLoggedIn()) {
             navigateToAuth()
             return
         }
 
         try {
-            // Infla el layout principal.
             _binding = ActivityMainBinding.inflate(layoutInflater)
-
-            // Muestra la interfaz en pantalla.
             setContentView(binding.root)
-
-            // Configura la navegación.
             setupNavigation()
         } catch (e: Exception) {
-            // Redirige al login si ocurre un error al cargar.
+            // Si hay un error de "segunda vez" por datos corruptos, limpiamos y reiniciamos
             navigateToAuth()
         }
     }
 
-    /**
-     * Configura el Navigation Component y el BottomNavigationView.
-     */
     private fun setupNavigation() {
         try {
-            // Obtiene el NavHostFragment definido en el layout.
             val navHostFragment = supportFragmentManager
                 .findFragmentById(R.id.navHostFragment) as NavHostFragment
-
-            // Obtiene el NavController.
             navController = navHostFragment.navController
-
-            // Vincula el menú inferior con la navegación.
-            binding.bottomNavigation
-                .setupWithNavController(navController)
+            binding.bottomNavigation.setupWithNavController(navController)
         } catch (e: Exception) {
-            // Imprime el error en la consola.
+            // Error común si el fragmento no carga a tiempo
             e.printStackTrace()
         }
     }
 
-    /**
-     * Navega a la pantalla de autenticación.
-     */
     private fun navigateToAuth() {
         val intent = Intent(this, AuthActivity::class.java)
-
-        // Limpia el historial de actividades.
-        intent.flags =
-            Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TASK
-
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }
 
-    /**
-     * Libera el binding al destruir la actividad.
-     */
     override fun onDestroy() {
         super.onDestroy()
-
-        // Evita fugas de memoria.
         _binding = null
     }
 }
