@@ -13,6 +13,7 @@ import androidx.room.PrimaryKey
  * @param id           ID único generado por Firestore (string UUID)
  * @param name         Nombre de la mascota
  * @param type         Tipo: "perro", "gato" u "otro"
+ * @param sex          Sexo: "Macho", "Hembra" o "No aplica"
  * @param age          Edad aproximada (ej: "2 años", "6 meses")
  * @param city         Ciudad donde se encuentra la mascota
  * @param description  Descripción completa de la mascota
@@ -28,8 +29,9 @@ data class Pet(
     val id: String = "",
     val name: String = "",
     val type: String = "",
+    val sex: String = "", // <-- Propiedad integrada para el sexo
     val age: String = "",
-    val city: String = "", // <-- Propiedad integrada con éxito
+    val city: String = "",
     val description: String = "",
     val contactInfo: String = "",
     val photoUrl: String = "",
@@ -45,8 +47,9 @@ data class Pet(
         "id" to id,
         "name" to name,
         "type" to type,
+        "sex" to sex, // <-- Mapeado a la base remota
         "age" to age,
-        "city" to city, // <-- Mapeado a la base remota
+        "city" to city,
         "description" to description,
         "contactInfo" to contactInfo,
         "photoUrl" to photoUrl,
@@ -64,8 +67,9 @@ data class Pet(
             id = map["id"] as? String ?: "",
             name = map["name"] as? String ?: "",
             type = map["type"] as? String ?: "",
+            sex = map["sex"] as? String ?: "", // <-- Recuperado de forma segura
             age = map["age"] as? String ?: "",
-            city = map["city"] as? String ?: "", // <-- Recuperado de forma segura
+            city = map["city"] as? String ?: "",
             description = map["description"] as? String ?: "",
             contactInfo = map["contactInfo"] as? String ?: "",
             photoUrl = map["photoUrl"] as? String ?: "",

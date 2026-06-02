@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- app/src/main/res/layout/fragment_publish.xml -->
+<!-- Pantalla para publicar una nueva mascota -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -29,10 +31,11 @@
                 android:textColor="#000000"
                 android:layout_marginBottom="24dp"/>
 
+            <!-- Selector de Foto -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardPhoto"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="220dp"
                 android:layout_marginBottom="24dp"
                 android:clickable="true"
                 android:focusable="true"
@@ -69,14 +72,15 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="12dp"
                             android:text="Seleccionar foto"
                             android:textColor="#4CAF50"
-                            android:textSize="15sp" />
+                            android:textSize="17sp" />
                     </LinearLayout>
                 </FrameLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Campo: Nombre -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilName"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -99,6 +103,7 @@
                     android:textColor="#333333"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Campo: Tipo de Mascota -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilType"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
@@ -119,6 +124,30 @@
                     android:textColor="#333333"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Campo: Sexo (Actualizado con icono limpio) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilSex"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Sexo"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:startIconDrawable="@drawable/ic_sex"
+                app:startIconTint="#757575">
+
+                <AutoCompleteTextView
+                    android:id="@+id/actvSex"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:textColor="#333333"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo: Ciudad (Actualizado con icono limpio) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilCity"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -130,7 +159,7 @@
                 app:boxCornerRadiusTopEnd="14dp"
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusBottomEnd="14dp"
-                app:startIconDrawable="@android:drawable/ic_menu_compass"
+                app:startIconDrawable="@drawable/ic_location"
                 app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -141,6 +170,7 @@
                     android:textColor="#333333"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Campo: Edad (Actualizado con icono limpio) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilAge"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -152,7 +182,7 @@
                 app:boxCornerRadiusTopEnd="14dp"
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusBottomEnd="14dp"
-                app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
+                app:startIconDrawable="@drawable/ic_calendar"
                 app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -162,6 +192,7 @@
                     android:textColor="#333333"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Campo: Descripción -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilDescription"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -184,6 +215,7 @@
                     android:textColor="#333333"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Campo: Contacto (Actualizado con icono ic_info) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilContact"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -195,17 +227,18 @@
                 app:boxCornerRadiusTopEnd="14dp"
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusBottomEnd="14dp"
-                app:startIconDrawable="@android:drawable/sym_action_call"
+                app:startIconDrawable="@drawable/ic_info"
                 app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etContact"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="phone"
+                    android:inputType="textEmailAddress"
                     android:textColor="#333333"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Botón Publicar -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPublish"
                 android:layout_width="match_parent"
@@ -221,6 +254,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Overlay de Carga -->
     <FrameLayout
         android:id="@+id/loadingOverlay"
         android:layout_width="match_parent"
