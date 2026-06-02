@@ -7,8 +7,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -60,6 +60,12 @@ class DetailFragment : Fragment(), DetailContract.View {
             tvDetailName.text = pet.name
             tvDetailType.text = pet.type.replaceFirstChar { it.uppercase() }
             tvDetailAge.text = pet.age
+
+            // ─── CORRECCIÓN: Asignamos los datos que hacían falta ───
+            tvDetailSex.text = pet.sex
+            tvDetailCity.text = pet.city
+            // ────────────────────────────────────────────────────────
+
             tvDetailDescription.text = pet.description
             tvDetailContact.text = pet.contactInfo
             tvDetailOwner.text = "Publicado por: ${pet.ownerName}"
@@ -86,12 +92,28 @@ class DetailFragment : Fragment(), DetailContract.View {
     }
 
     override fun showContactInfo(contactInfo: String) {
-        // Mostrar información de contacto en un diálogo
-        AlertDialog.Builder(requireContext())
-            .setTitle("Información de contacto")
-            .setMessage(contactInfo)
-            .setPositiveButton("Cerrar", null)
-            .show()
+        // 1. Inflar de forma manual el diseño personalizado del diálogo
+        val dialogView = LayoutInflater.from(requireContext()).inflate(com.adoptapet.app.R.layout.dialog_contact_info, null)
+
+        // 2. CORRECCIÓN: Construir el diálogo usando MaterialAlertDialogBuilder para un diseño adaptativo y con buen contraste
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // 3. Vincular los elementos internos del XML del diálogo
+        val tvDialogContactValue = dialogView.findViewById<TextView>(com.adoptapet.app.R.id.tvDialogContactValue)
+        val btnDialogClose = dialogView.findViewById<com.google.android.material.button.MaterialButton>(com.adoptapet.app.R.id.btnDialogClose)
+
+        // 4. Inyectar el valor real de contacto de la mascota
+        tvDialogContactValue.text = contactInfo
+
+        // 5. Configurar el botón "ENTENDIDO" para cerrar el cuadro al hacer click
+        btnDialogClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // 6. Lanzar el diálogo en primer plano
+        dialog.show()
     }
 
     override fun onDestroyView() {

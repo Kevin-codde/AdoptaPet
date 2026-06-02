@@ -21,7 +21,7 @@ import com.adoptapet.app.ui.presenter.PublishPresenter
 
 /**
  * Fragment de publicación actualizado para AdoptaPet.
- * Gestiona la selección de imágenes locales y la publicación hacia Firebase Storage.
+ * Gestiona la selección de imágenes locales, el sexo y la publicación hacia Firebase Storage.
  */
 class PublishFragment : Fragment(), PublishContract.View {
 
@@ -49,7 +49,6 @@ class PublishFragment : Fragment(), PublishContract.View {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ¡CONEXIÓN CORREGIDA! Inicializamos usando el Dao de Room como pide tu repositorio funcional original
         val db = AppDatabase.getDatabase(requireContext())
         presenter = PublishPresenter(
             view = this,
@@ -58,6 +57,7 @@ class PublishFragment : Fragment(), PublishContract.View {
         )
 
         setupPetTypeDropdown()
+        setupSexDropdown()
         setupClickListeners()
     }
 
@@ -67,22 +67,34 @@ class PublishFragment : Fragment(), PublishContract.View {
         binding.actvType.setAdapter(adapter)
     }
 
+    private fun setupSexDropdown() {
+        val optionsSex = listOf("Macho", "Hembra", "No aplica")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, optionsSex)
+        binding.actvSex.setAdapter(adapter)
+    }
+
     private fun setupClickListeners() {
         binding.cardPhoto.setOnClickListener {
             openGallery()
         }
 
         binding.btnPublish.setOnClickListener {
+            // Limpiamos los errores visuales de los 7 contenedores antes de validar
             binding.tilName.error = null
             binding.tilType.error = null
+            binding.tilSex.error = null
             binding.tilCity.error = null
             binding.tilAge.error = null
+            binding.tilDescription.error = null
+            binding.tilContact.error = null
 
+            // Enviamos todos los datos recopilados al presentador
             presenter.publishPet(
                 name = binding.etName.text.toString(),
                 type = binding.actvType.text.toString(),
+                sex = binding.actvSex.text.toString(),
                 age = binding.etAge.text.toString(),
-                city = binding.etCity.text.toString(), // Enviamos la ciudad al presentador
+                city = binding.etCity.text.toString(),
                 description = binding.etDescription.text.toString(),
                 contactInfo = binding.etContact.text.toString(),
                 photoUri = selectedPhotoUri
@@ -115,21 +127,17 @@ class PublishFragment : Fragment(), PublishContract.View {
     }
 
     override fun showFieldError(field: String, message: String) {
-        if (message.isEmpty()) {
-            when (field) {
-                "name" -> binding.tilName.error = null
-                "type" -> binding.tilType.error = null
-                "city" -> binding.tilCity.error = null
-                "age" -> binding.tilAge.error = null
-            }
-            return
-        }
+        val errorValue = if (message.isEmpty()) null else message
 
+        // Controla la aparición y desaparición de los errores en toda la UI
         when (field) {
-            "name" -> binding.tilName.error = message
-            "type" -> binding.tilType.error = message
-            "city" -> binding.tilCity.error = message
-            "age" -> binding.tilAge.error = message
+            "name" -> binding.tilName.error = errorValue
+            "type" -> binding.tilType.error = errorValue
+            "sex" -> binding.tilSex.error = errorValue
+            "city" -> binding.tilCity.error = errorValue
+            "age" -> binding.tilAge.error = errorValue
+            "description" -> binding.tilDescription.error = errorValue
+            "contactInfo" -> binding.tilContact.error = errorValue
         }
     }
 
@@ -146,6 +154,7 @@ class PublishFragment : Fragment(), PublishContract.View {
         binding.etDescription.text?.clear()
         binding.etContact.text?.clear()
         binding.actvType.text?.clear()
+        binding.actvSex.text?.clear()
 
         binding.ivPetPreview.setImageDrawable(null)
         binding.ivPetPreview.alpha = 0.5f
@@ -154,8 +163,11 @@ class PublishFragment : Fragment(), PublishContract.View {
 
         binding.tilName.error = null
         binding.tilType.error = null
+        binding.tilSex.error = null
         binding.tilCity.error = null
         binding.tilAge.error = null
+        binding.tilDescription.error = null
+        binding.tilContact.error = null
     }
 
     override fun onDestroyView() {

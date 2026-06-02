@@ -32,8 +32,9 @@ interface PublishContract {
         fun publishPet(
             name: String,
             type: String,
+            sex: String, //
             age: String,
-            city: String, // <-- Parámetro agregado al contrato
+            city: String,
             description: String,
             contactInfo: String,
             photoUri: Uri?
