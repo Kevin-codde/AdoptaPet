@@ -12,23 +12,24 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import coil.load
 import com.adoptapet.app.data.local.AppDatabase
+import com.adoptapet.app.data.model.Pet
 import com.adoptapet.app.data.repository.AuthRepository
 import com.adoptapet.app.data.repository.PetRepository
 import com.adoptapet.app.databinding.FragmentPublishBinding
 import com.adoptapet.app.ui.contracts.PublishContract
 import com.adoptapet.app.ui.presenter.PublishPresenter
 
-/**
- * Fragment de publicación actualizado para AdoptaPet.
- * Gestiona la selección de imágenes locales, el sexo y la publicación hacia Firebase Storage.
- */
 class PublishFragment : Fragment(), PublishContract.View {
 
     private var _binding: FragmentPublishBinding? = null
     private val binding get() = _binding!!
     private lateinit var presenter: PublishPresenter
     private var selectedPhotoUri: Uri? = null
+
+    // CORREGIDO: Cambiado de Int a String? para coincidir con el UUID del modelo Pet
+    private var editPetId: String? = null
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -59,6 +60,13 @@ class PublishFragment : Fragment(), PublishContract.View {
         setupPetTypeDropdown()
         setupSexDropdown()
         setupClickListeners()
+
+        // CORREGIDO: Se lee el argumento como String en lugar de Int
+        editPetId = arguments?.getString("petId")
+        if (editPetId != null) {
+            binding.btnPublish.text = "GUARDAR CAMBIOS"
+            presenter.loadPetToEdit(editPetId!!)
+        }
     }
 
     private fun setupPetTypeDropdown() {
@@ -79,7 +87,6 @@ class PublishFragment : Fragment(), PublishContract.View {
         }
 
         binding.btnPublish.setOnClickListener {
-            // Limpiamos los errores visuales de los 7 contenedores antes de validar
             binding.tilName.error = null
             binding.tilType.error = null
             binding.tilSex.error = null
@@ -88,17 +95,31 @@ class PublishFragment : Fragment(), PublishContract.View {
             binding.tilDescription.error = null
             binding.tilContact.error = null
 
-            // Enviamos todos los datos recopilados al presentador
-            presenter.publishPet(
-                name = binding.etName.text.toString(),
-                type = binding.actvType.text.toString(),
-                sex = binding.actvSex.text.toString(),
-                age = binding.etAge.text.toString(),
-                city = binding.etCity.text.toString(),
-                description = binding.etDescription.text.toString(),
-                contactInfo = binding.etContact.text.toString(),
-                photoUri = selectedPhotoUri
-            )
+            // CORREGIDO: Bifurcación usando la condición correcta para String?
+            if (editPetId != null) {
+                presenter.updatePet(
+                    id = editPetId!!,
+                    name = binding.etName.text.toString(),
+                    type = binding.actvType.text.toString(),
+                    sex = binding.actvSex.text.toString(),
+                    age = binding.etAge.text.toString(),
+                    city = binding.etCity.text.toString(),
+                    description = binding.etDescription.text.toString(),
+                    contactInfo = binding.etContact.text.toString(),
+                    photoUri = selectedPhotoUri
+                )
+            } else {
+                presenter.publishPet(
+                    name = binding.etName.text.toString(),
+                    type = binding.actvType.text.toString(),
+                    sex = binding.actvSex.text.toString(),
+                    age = binding.etAge.text.toString(),
+                    city = binding.etCity.text.toString(),
+                    description = binding.etDescription.text.toString(),
+                    contactInfo = binding.etContact.text.toString(),
+                    photoUri = selectedPhotoUri
+                )
+            }
         }
     }
 
@@ -110,15 +131,14 @@ class PublishFragment : Fragment(), PublishContract.View {
         pickImageLauncher.launch(Intent.createChooser(intent, "Selecciona la foto de tu mascota"))
     }
 
-    // ─── Implementación de PublishContract.View ──────────────────────────
-
     override fun showLoading(show: Boolean) {
         binding.loadingOverlay.visibility = if (show) View.VISIBLE else View.GONE
         binding.btnPublish.isEnabled = !show
     }
 
     override fun showPublishSuccess() {
-        Toast.makeText(requireContext(), "¡Mascota publicada con éxito!", Toast.LENGTH_LONG).show()
+        val message = if (editPetId != null) "¡Mascota actualizada con éxito!" else "¡Mascota publicada con éxito!"
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
         clearForm()
     }
 
@@ -129,7 +149,6 @@ class PublishFragment : Fragment(), PublishContract.View {
     override fun showFieldError(field: String, message: String) {
         val errorValue = if (message.isEmpty()) null else message
 
-        // Controla la aparición y desaparición de los errores en toda la UI
         when (field) {
             "name" -> binding.tilName.error = errorValue
             "type" -> binding.tilType.error = errorValue
@@ -147,6 +166,26 @@ class PublishFragment : Fragment(), PublishContract.View {
         binding.ivPetPreview.setImageURI(uri)
     }
 
+    override fun showPetDataForEdit(pet: Pet) {
+        binding.etName.setText(pet.name)
+        binding.etAge.setText(pet.age)
+        binding.etCity.setText(pet.city)
+        binding.etDescription.setText(pet.description)
+        binding.etContact.setText(pet.contactInfo)
+
+        binding.actvType.setText(pet.type, false)
+        binding.actvSex.setText(pet.sex, false)
+
+        if (pet.photoUrl.isNotEmpty()) {
+            binding.layoutAddPhoto.visibility = View.GONE
+            binding.ivPetPreview.alpha = 1.0f
+            binding.ivPetPreview.load(pet.photoUrl) {
+                placeholder(com.adoptapet.app.R.drawable.ic_paw_placeholder)
+                error(com.adoptapet.app.R.drawable.ic_paw_placeholder)
+            }
+        }
+    }
+
     override fun clearForm() {
         binding.etName.text?.clear()
         binding.etCity.text?.clear()
@@ -160,6 +199,10 @@ class PublishFragment : Fragment(), PublishContract.View {
         binding.ivPetPreview.alpha = 0.5f
         binding.layoutAddPhoto.visibility = View.VISIBLE
         selectedPhotoUri = null
+
+        // CORREGIDO: Resetear a null y restaurar texto original del botón
+        editPetId = null
+        binding.btnPublish.text = "PUBLICAR"
 
         binding.tilName.error = null
         binding.tilType.error = null

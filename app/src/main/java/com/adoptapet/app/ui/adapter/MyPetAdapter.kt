@@ -16,11 +16,13 @@ import com.adoptapet.app.databinding.ItemMyPetBinding
 
 /**
  * Adapter para la lista de mascotas propias en la pantalla de Perfil.
- * Muestra una vista compacta con botón de eliminación.
+ * Muestra una vista compacta con botones de edición y eliminación.
  *
+ * @param onEditClick    Callback al presionar "Editar" en un ítem
  * @param onDeleteClick  Callback al presionar "Eliminar" en un ítem
  */
 class MyPetAdapter(
+    private val onEditClick: (Pet) -> Unit,
     private val onDeleteClick: (Pet) -> Unit
 ) : ListAdapter<Pet, MyPetAdapter.MyPetViewHolder>(MyPetDiffCallback()) {
 
@@ -58,6 +60,9 @@ class MyPetAdapter(
                 } else {
                     ivMyPetPhoto.setImageResource(R.drawable.ic_paw_placeholder)
                 }
+
+                // NUEVO: Botón editar
+                btnEditPet.setOnClickListener { onEditClick(pet) }
 
                 // Botón eliminar
                 btnDeletePet.setOnClickListener { onDeleteClick(pet) }
