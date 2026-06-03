@@ -46,27 +46,21 @@ class PetRepository(
      * Publica una mascota usando Firebase Storage para la imagen.
      */
     suspend fun publishPet(pet: Pet, photoUri: Uri?): Pet {
-        // 1. Usar el ID generado en el Presenter o generar uno nuevo aquí
         val petId = if (pet.id.isBlank()) UUID.randomUUID().toString() else pet.id
 
-        // 2. Subir imagen a Firebase Storage
         val photoUrl = if (photoUri != null) {
             uploadPetPhoto(petId, photoUri)
         } else {
-            // Imagen genérica por si algo falla con el Uri
             "https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=1000"
         }
 
-        // 3. Construir objeto final con la URL real de Firebase
         val finalPet = pet.copy(id = petId, photoUrl = photoUrl)
 
-        // 4. Guardar en Firestore (Remoto)
         firestore.collection(COLLECTION_PETS)
             .document(petId)
             .set(finalPet.toFirestoreMap())
             .await()
 
-        // 5. Guardar en Room (Local)
         petDao.insert(finalPet)
 
         return finalPet
@@ -76,10 +70,7 @@ class PetRepository(
         val storageRef = storage.reference
             .child("$STORAGE_PETS_PATH/$petId.jpg")
 
-        // Subir archivo y esperar
         storageRef.putFile(uri).await()
-
-        // Retornar la URL de descarga pública de Firebase
         return storageRef.downloadUrl.await().toString()
     }
 
@@ -89,4 +80,27 @@ class PetRepository(
     }
 
     suspend fun getPetById(petId: String): Pet? = petDao.getPetById(petId)
+
+    /**
+     * NUEVO: Actualiza los datos de una mascota existente en Firebase y Room.
+     * Si photoUri es null, conserva la URL de la foto que ya tenía.
+     */
+    suspend fun updatePet(pet: Pet, photoUri: Uri?) {
+        val photoUrl = if (photoUri != null) {
+            uploadPetPhoto(pet.id, photoUri)
+        } else {
+            pet.photoUrl
+        }
+
+        val finalPet = pet.copy(photoUrl = photoUrl)
+
+        // Actualizar en Firestore Remoto
+        firestore.collection(COLLECTION_PETS)
+            .document(finalPet.id)
+            .set(finalPet.toFirestoreMap())
+            .await()
+
+        // Actualizar en Room Local (vuelve a insertar con la estrategia REPLACE de tu Dao)
+        petDao.insert(finalPet)
+    }
 }

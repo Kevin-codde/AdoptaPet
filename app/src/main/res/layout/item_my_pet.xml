@@ -1,75 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- app/src/main/res/layout/item_my_pet.xml -->
-<!-- Tarjeta compacta de mascota para la pantalla de perfil (con botón eliminar) -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    style="@style/Widget.AdoptaPet.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp">
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@android:color/white">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="12dp">
+        android:padding="12dp"
+        android:background="@android:color/transparent">
 
-        <!-- Foto de la mascota (miniatura cuadrada) -->
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivMyPetPhoto"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_paw_placeholder"
-            android:background="@drawable/bg_image_rounded"
-            android:clipToOutline="true"
-            android:contentDescription="Foto" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
 
-        <!-- Info de la mascota -->
         <LinearLayout
+            android:id="@+id/layoutText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
             android:orientation="vertical"
-            android:layout_marginStart="14dp">
+            android:background="@android:color/transparent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/layoutButtons"
+            app:layout_constraintStart_toEndOf="@+id/ivMyPetPhoto"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/tvMyPetName"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="Nombre"
+                android:textColor="#212121"
+                android:textStyle="bold"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold" />
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:background="@android:color/transparent" />
 
             <TextView
                 android:id="@+id/tvMyPetType"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="Mascota"
+                android:textColor="#666666"
                 android:textSize="13sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="3dp" />
+                android:layout_marginTop="2dp"
+                android:background="@android:color/transparent" />
 
             <TextView
                 android:id="@+id/tvMyPetAge"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="Edad"
+                android:textColor="#888888"
                 android:textSize="12sp"
-                android:textColor="@color/text_hint"
-                android:layout_marginTop="2dp" />
+                android:layout_marginTop="2dp"
+                android:background="@android:color/transparent" />
         </LinearLayout>
 
-        <!-- Botón eliminar -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDeletePet"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        <LinearLayout
+            android:id="@+id/layoutButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:strokeColor="@color/error"
-            android:textColor="@color/error"
-            android:text="@string/btn_delete"
-            android:textSize="12sp" />
+            android:orientation="horizontal"
+            android:background="@android:color/transparent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-    </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditPet"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="EDITAR"
+                android:textColor="#4CAF50"
+                android:textSize="12sp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="6dp"
+                android:layout_marginEnd="2dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeletePet"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ELIMINAR"
+                android:textColor="#E53935"
+                android:textSize="12sp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="6dp"/>
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

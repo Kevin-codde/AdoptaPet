@@ -1,6 +1,4 @@
 // app/src/main/java/com/adoptapet/app/ui/contracts/AuthContract.kt
-// Contrato MVP para la pantalla de autenticación
-
 package com.adoptapet.app.ui.contracts
 
 import com.adoptapet.app.data.model.User
@@ -19,6 +17,7 @@ interface AuthContract {
         fun showLoading(show: Boolean)
         fun showLoginSuccess(user: User)
         fun showRegisterSuccess(user: User)
+        fun showResetPasswordEmailSent() // <--- Nuevo método añadido
         fun showError(message: String)
         fun showEmailError(message: String)
         fun showPasswordError(message: String)
@@ -33,6 +32,7 @@ interface AuthContract {
     interface Presenter {
         fun login(email: String, password: String)
         fun register(name: String, email: String, password: String)
+        fun sendPasswordReset(email: String) // <--- Nuevo método añadido
         fun onDestroy()
     }
 }

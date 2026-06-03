@@ -1,6 +1,4 @@
 // app/src/main/java/com/adoptapet/app/ui/presenter/AuthPresenter.kt
-// Presenter MVP para autenticación: login y registro
-
 package com.adoptapet.app.ui.presenter
 
 import com.adoptapet.app.data.repository.AuthRepository
@@ -13,28 +11,18 @@ import kotlinx.coroutines.launch
 
 /**
  * Presenter de autenticación.
- * Contiene TODA la lógica de negocio para login y registro.
- * No tiene referencias directas a Android SDK (testeable con JUnit puro).
- *
- * @param view        Referencia a la interfaz View (AuthActivity)
- * @param repository  Repositorio de autenticación inyectado
+ * Contiene TODA la lógica de negocio para login, registro y recuperación de contraseña.
  */
 class AuthPresenter(
     private var view: AuthContract.View?,
     private val repository: AuthRepository = AuthRepository()
 ) : AuthContract.Presenter {
 
-    // CoroutineScope con Dispatchers.Main para actualizar UI desde coroutines
     private val presenterScope = CoroutineScope(Dispatchers.Main + Job())
 
     // ─── Login ────────────────────────────────────────────────────────────────
 
-    /**
-     * Valida las credenciales y ejecuta el login.
-     * Actualiza la View según el resultado (éxito o error).
-     */
     override fun login(email: String, password: String) {
-        // Validación de campos
         if (!validateLoginFields(email, password)) return
 
         view?.showLoading(true)
@@ -55,11 +43,7 @@ class AuthPresenter(
 
     // ─── Registro ─────────────────────────────────────────────────────────────
 
-    /**
-     * Valida los datos y ejecuta el registro de nuevo usuario.
-     */
     override fun register(name: String, email: String, password: String) {
-        // Validación de campos de registro
         if (!validateRegisterFields(name, email, password)) return
 
         view?.showLoading(true)
@@ -78,12 +62,35 @@ class AuthPresenter(
         }
     }
 
+    // ─── Recuperar Contraseña ──────────────────────────────────────────────────
+
+    override fun sendPasswordReset(email: String) {
+        if (email.isBlank()) {
+            view?.showEmailError("El correo es obligatorio")
+            return
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            view?.showEmailError("Correo electrónico inválido")
+            return
+        }
+
+        view?.showLoading(true)
+
+        presenterScope.launch {
+            try {
+                // Se invoca el método asíncrono desde el repositorio usando corrutinas
+                repository.sendPasswordResetEmail(email.trim())
+                view?.showLoading(false)
+                view?.showResetPasswordEmailSent()
+            } catch (e: Exception) {
+                view?.showLoading(false)
+                val errorMsg = parseFirebaseError(e.message)
+                view?.showError(errorMsg)
+            }
+        }
+    }
+
     // ─── Validaciones ─────────────────────────────────────────────────────────
 
-    /**
-     * Valida los campos del formulario de login.
-     * @return true si todos los campos son válidos
-     */
     private fun validateLoginFields(email: String, password: String): Boolean {
         var isValid = true
 
@@ -106,10 +113,6 @@ class AuthPresenter(
         return isValid
     }
 
-    /**
-     * Valida los campos del formulario de registro.
-     * @return true si todos los campos son válidos
-     */
     private fun validateRegisterFields(name: String, email: String, password: String): Boolean {
         var isValid = true
 
@@ -137,31 +140,17 @@ class AuthPresenter(
         return isValid
     }
 
-    /**
-     * Traduce mensajes de error de Firebase a mensajes amigables en español.
-     */
     private fun parseFirebaseError(message: String?): String {
         return when {
             message == null -> "Ocurrió un error desconocido"
-            message.contains("email address is already in use") ->
-                "Este correo ya está registrado"
-            message.contains("no user record") || message.contains("password is invalid") ->
-                "Correo o contraseña incorrectos"
-            message.contains("network") || message.contains("Network") ->
-                "Error de conexión. Verifica tu internet"
-            message.contains("badly formatted") ->
-                "Formato de correo inválido"
+            message.contains("email address is already in use") -> "Este correo ya está registrado"
+            message.contains("no user record") || message.contains("password is invalid") || message.contains("wrong-password") -> "Correo o contraseña incorrectos"
+            message.contains("network") || message.contains("Network") -> "Error de conexión. Verifica tu internet"
+            message.contains("badly formatted") -> "Formato de correo inválido"
             else -> "Error: $message"
         }
     }
 
-    // ─── Ciclo de vida ────────────────────────────────────────────────────────
-
-    /**
-     * Libera recursos cuando la View se destruye.
-     * Cancela coroutines en vuelo y elimina la referencia a la View
-     * para evitar memory leaks.
-     */
     override fun onDestroy() {
         presenterScope.cancel()
         view = null
