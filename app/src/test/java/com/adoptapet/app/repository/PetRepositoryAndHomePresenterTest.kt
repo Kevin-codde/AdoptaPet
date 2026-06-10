@@ -1,6 +1,4 @@
-// app/src/test/java/com/adoptapet/app/repository/PetRepositoryTest.kt
-// Pruebas unitarias JUnit para PetRepository y HomePresenter
-
+// app/src/test/java/com/adoptapet/app/repository/PetRepositoryAndHomePresenterTest.kt
 package com.adoptapet.app.repository
 
 import com.adoptapet.app.data.local.PetDao
@@ -8,6 +6,11 @@ import com.adoptapet.app.data.model.Pet
 import com.adoptapet.app.data.repository.PetRepository
 import com.adoptapet.app.ui.contracts.HomeContract
 import com.adoptapet.app.ui.presenter.HomePresenter
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -24,21 +27,12 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
-/**
- * Pruebas unitarias para [PetRepository] y [HomePresenter].
- *
- * Cubre:
- * 1. Repository: getAllPetsLocal retorna el Flow del DAO
- * 2. Repository: deletePet llama a deleteById en el DAO
- * 3. Repository: searchPetsLocal delega al DAO correctamente
- * 4. HomePresenter: loadPets muestra estado vacío cuando no hay mascotas
- * 5. HomePresenter: loadPets muestra lista cuando hay mascotas
- * 6. HomePresenter: searchPets delega al repositorio correctamente
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PetRepositoryAndHomePresenterTest {
 
     private lateinit var mockDao: PetDao
+    private lateinit var mockFirestore: FirebaseFirestore
+    private lateinit var mockStorage: FirebaseStorage
     private lateinit var repository: PetRepository
     private lateinit var mockView: HomeContract.View
     private lateinit var homePresenter: HomePresenter
@@ -58,12 +52,15 @@ class PetRepositoryAndHomePresenterTest {
         Dispatchers.setMain(testDispatcher)
         mockDao = mock()
         mockView = mock()
+        mockFirestore = mock()
+        mockStorage = mock()
 
-        // Configurar el DAO mock para retornar datos básicos
+        // Configurar el DAO mock para retornar datos básicos por defecto
         whenever(mockDao.getAllPets()).thenReturn(flowOf(samplePets))
         whenever(mockDao.searchPets(any())).thenReturn(flowOf(emptyList()))
 
-        repository = PetRepository(mockDao)
+        // Pasamos los mocks de Firebase para proteger el entorno JVM
+        repository = PetRepository(mockDao, mockFirestore, mockStorage)
         homePresenter = HomePresenter(mockView, repository)
     }
 
@@ -75,27 +72,25 @@ class PetRepositoryAndHomePresenterTest {
 
     // ─── Tests de PetRepository ───────────────────────────────────────────────
 
-    /**
-     * Test 1: getAllPetsLocal retorna el Flow del DAO directamente.
-     */
     @Test
     fun `getAllPetsLocal retorna flow del DAO`() = runTest {
-        // Act
         val flow = repository.getAllPetsLocal()
-
-        // Assert: el flow no es null (existe)
         assert(flow != null)
-        // Verificar que se llamó al DAO
         verify(mockDao).getAllPets()
     }
 
-    /**
-     * Test 2: deletePet llama a deleteById en el DAO con el ID correcto.
-     */
     @Test
     fun `deletePet llama deleteById en el DAO con el ID correcto`() = runTest {
         // Arrange
         val petId = "pet_id_123"
+        val mockCollection: CollectionReference = mock()
+        val mockDocument: DocumentReference = mock()
+
+        // Simulamos de forma segura la estructura encadenada de Firebase Firestore
+        whenever(mockFirestore.collection(any())).thenReturn(mockCollection)
+        whenever(mockCollection.document(any())).thenReturn(mockDocument)
+        // Tasks.forResult(null) simula que el .await() remoto terminó exitosamente e inmediatamente
+        whenever(mockDocument.delete()).thenReturn(Tasks.forResult(null))
 
         // Act
         repository.deletePet(petId)
@@ -104,85 +99,49 @@ class PetRepositoryAndHomePresenterTest {
         verify(mockDao).deleteById(petId)
     }
 
-    /**
-     * Test 3: searchPetsLocal delega al DAO con la query correcta.
-     */
     @Test
     fun `searchPetsLocal delega al DAO con la query correcta`() = runTest {
-        // Arrange
         val query = "perro"
-
-        // Act
         repository.searchPetsLocal(query)
-
-        // Assert
         verify(mockDao).searchPets(query)
     }
 
     // ─── Tests de HomePresenter ───────────────────────────────────────────────
 
-    /**
-     * Test 4: loadPets muestra la lista cuando el DAO tiene mascotas.
-     */
     @Test
     fun `loadPets muestra lista de mascotas cuando el DAO tiene datos`() = runTest {
-        // El DAO ya está configurado para retornar samplePets en setUp
-
-        // Act
         homePresenter.loadPets()
         advanceUntilIdle()
 
-        // Assert: la View recibe los datos
         verify(mockView).showPets(samplePets)
         verify(mockView).showEmptyState(false)
     }
 
-    /**
-     * Test 5: loadPets muestra estado vacío cuando no hay mascotas.
-     */
     @Test
     fun `loadPets muestra estado vacio cuando el DAO no tiene mascotas`() = runTest {
-        // Arrange: DAO retorna lista vacía
+        // Arrange: Reconfiguramos el comportamiento del DAO únicamente para este test
         whenever(mockDao.getAllPets()).thenReturn(flowOf(emptyList()))
-        val repository2 = PetRepository(mockDao)
-        val presenter2 = HomePresenter(mockView, repository2)
 
-        // Act
-        presenter2.loadPets()
+        // Act: Usamos el homePresenter común creado en el setUp
+        homePresenter.loadPets()
         advanceUntilIdle()
 
         // Assert
         verify(mockView).showEmptyState(true)
-
-        presenter2.onDestroy()
     }
 
-    /**
-     * Test 6: searchPets con query vacío recarga todas las mascotas.
-     * Una búsqueda en blanco debe volver a mostrar la lista completa.
-     */
     @Test
     fun `searchPets con query vacio recarga todas las mascotas`() = runTest {
-        // Act: búsqueda vacía
         homePresenter.searchPets("")
         advanceUntilIdle()
 
-        // Assert: se llama a getAllPets (no a searchPets) para mostrar todo
         verify(mockDao).getAllPets()
     }
 
-    /**
-     * Test 7: onPetSelected delega la navegación a la View.
-     */
     @Test
     fun `onPetSelected llama navigateToDetail en la View`() {
-        // Arrange
         val pet = samplePets[0]
-
-        // Act
         homePresenter.onPetSelected(pet)
-
-        // Assert
         verify(mockView).navigateToDetail(pet)
     }
 }

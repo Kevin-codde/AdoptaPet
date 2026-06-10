@@ -1,6 +1,4 @@
 // app/src/main/java/com/adoptapet/app/ui/profile/ProfileFragment.kt
-// Fragment de perfil del usuario: muestra datos y mascotas publicadas
-
 package com.adoptapet.app.ui.profile
 
 import android.content.Intent
@@ -11,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.adoptapet.app.data.local.AppDatabase
 import com.adoptapet.app.data.model.Pet
@@ -22,11 +21,6 @@ import com.adoptapet.app.ui.auth.AuthActivity
 import com.adoptapet.app.ui.contracts.ProfileContract
 import com.adoptapet.app.ui.presenter.ProfilePresenter
 
-/**
- * Fragment de perfil de usuario.
- * Muestra información del usuario autenticado y sus mascotas publicadas.
- * Implementa [ProfileContract.View].
- */
 class ProfileFragment : Fragment(), ProfileContract.View {
 
     private var _binding: FragmentProfileBinding? = null
@@ -49,14 +43,22 @@ class ProfileFragment : Fragment(), ProfileContract.View {
         setupRecyclerView()
         setupClickListeners()
 
-        // Cargar datos del perfil y mascotas
         presenter.loadProfile()
         presenter.loadMyPets()
     }
 
     private fun setupRecyclerView() {
         myPetAdapter = MyPetAdapter(
-            onDeleteClick = { pet -> presenter.deletePet(pet) }
+            onEditClick = { pet ->
+                val bundle = Bundle().apply {
+                    // CORREGIDO: Se cambia putInt por putString ya que el ID es un UUID String
+                    putString("petId", pet.id)
+                }
+                findNavController().navigate(com.adoptapet.app.R.id.publishFragment, bundle)
+            },
+            onDeleteClick = { pet ->
+                presenter.deletePet(pet)
+            }
         )
 
         binding.rvMyPets.apply {
@@ -68,7 +70,6 @@ class ProfileFragment : Fragment(), ProfileContract.View {
 
     private fun setupClickListeners() {
         binding.btnLogout.setOnClickListener {
-            // Confirmar antes de cerrar sesión
             AlertDialog.Builder(requireContext())
                 .setTitle("Cerrar sesión")
                 .setMessage("¿Deseas cerrar tu sesión?")
@@ -77,8 +78,6 @@ class ProfileFragment : Fragment(), ProfileContract.View {
                 .show()
         }
     }
-
-    // ─── ProfileContract.View ─────────────────────────────────────────────
 
     override fun showLoading(show: Boolean) {
         binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
@@ -106,10 +105,6 @@ class ProfileFragment : Fragment(), ProfileContract.View {
         Toast.makeText(requireContext(), "Mascota eliminada correctamente", Toast.LENGTH_SHORT).show()
     }
 
-    /**
-     * Muestra un diálogo de confirmación antes de eliminar una publicación.
-     * Si el usuario confirma, llama a [ProfilePresenter.confirmDeletePet].
-     */
     override fun showDeleteConfirmation(pet: Pet) {
         AlertDialog.Builder(requireContext())
             .setTitle(getString(com.adoptapet.app.R.string.delete_confirm_title))

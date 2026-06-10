@@ -31,7 +31,6 @@ class PublishPresenter(
         contactInfo: String,
         photoUri: Uri?
     ) {
-        // Validación estricta de todos los campos obligatorios
         if (!validateFields(name, type, sex, age, city, description, contactInfo)) return
 
         if (photoUri == null) {
@@ -77,10 +76,76 @@ class PublishPresenter(
         }
     }
 
+    //  Carga los datos de la mascota desde el repositorio para mandarlos a la vista
+    override fun loadPetToEdit(petId: String) {
+        presenterScope.launch {
+            try {
+                val pet = petRepository.getPetById(petId)
+                if (pet != null) {
+                    view?.showPetDataForEdit(pet)
+                } else {
+                    view?.showError("No se pudo encontrar la información de la mascota")
+                }
+            } catch (e: Exception) {
+                view?.showError("Error al cargar datos: ${e.message}")
+            }
+        }
+    }
+
+    // Procesa la edición modificando los datos y enviándolos al repositorio
+    override fun updatePet(
+        id: String,
+        name: String,
+        type: String,
+        sex: String,
+        age: String,
+        city: String,
+        description: String,
+        contactInfo: String,
+        photoUri: Uri?
+    ) {
+        if (!validateFields(name, type, sex, age, city, description, contactInfo)) return
+
+        view?.showLoading(true)
+
+        presenterScope.launch {
+            try {
+                // Buscamos la mascota existente para conservar datos intactos (como el owner)
+                val existingPet = petRepository.getPetById(id)
+                if (existingPet == null) {
+                    view?.showLoading(false)
+                    view?.showError("La mascota no existe en la base de datos")
+                    return@launch
+                }
+
+                // Creamos una copia con los campos modificados
+                val updatedPet = existingPet.copy(
+                    name = name.trim(),
+                    type = type.trim(),
+                    sex = sex.trim(),
+                    age = age.trim(),
+                    city = city.trim(),
+                    description = description.trim(),
+                    contactInfo = contactInfo.trim()
+                )
+
+                // El repositorio se encargará de actualizar los datos en Room/Firebase
+                // Si photoUri es null, conservará la url de foto existente automáticamente
+                petRepository.updatePet(updatedPet, photoUri)
+
+                view?.showLoading(false)
+                view?.showPublishSuccess()
+                view?.clearForm()
+            } catch (e: Exception) {
+                view?.showLoading(false)
+                view?.showError("Error al actualizar la mascota: ${e.message}")
+            }
+        }
+    }
+
     private fun validateFields(name: String, type: String, sex: String, age: String, city: String, description: String, contactInfo: String): Boolean {
         var isValid = true
 
-        // Limpiamos errores previos de los 7 campos antes de evaluar de nuevo
         view?.showFieldError("name", "")
         view?.showFieldError("type", "")
         view?.showFieldError("sex", "")
@@ -89,7 +154,6 @@ class PublishPresenter(
         view?.showFieldError("description", "")
         view?.showFieldError("contactInfo", "")
 
-        // Validaciones obligatorias una por una
         if (name.isBlank()) { view?.showFieldError("name", "El nombre es obligatorio"); isValid = false }
         if (type.isBlank()) { view?.showFieldError("type", "Selecciona un tipo"); isValid = false }
         if (sex.isBlank()) { view?.showFieldError("sex", "Selecciona el sexo"); isValid = false }
