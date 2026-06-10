@@ -90,6 +90,8 @@ class PetRepository(
 
     /**
      * Actualiza los datos de una mascota existente en Firebase y Room.
+     * NUEVO: Actualiza los datos de una mascota existente en Firebase y Room.
+     * Si photoUri es null, conserva la URL de la foto que ya tenía.
      */
     suspend fun updatePet(pet: Pet, photoUri: Uri?) {
         val photoUrl = if (photoUri != null) {
@@ -100,11 +102,13 @@ class PetRepository(
 
         val finalPet = pet.copy(photoUrl = photoUrl)
 
+        // Actualizar en Firestore Remoto
         firestore.collection(COLLECTION_PETS)
             .document(finalPet.id)
             .set(finalPet.toFirestoreMap())
             .await()
 
+        // Actualizar en Room Local (vuelve a insertar con la estrategia REPLACE de tu Dao)
         petDao.insert(finalPet)
     }
 }

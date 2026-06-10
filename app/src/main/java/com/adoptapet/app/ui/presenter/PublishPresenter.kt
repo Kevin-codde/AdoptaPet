@@ -77,6 +77,7 @@ class PublishPresenter(
     }
 
     //  Carga los datos de la mascota desde el repositorio para mandarlos a la vista
+    // NUEVO: Carga los datos de la mascota desde el repositorio para mandarlos a la vista
     override fun loadPetToEdit(petId: String) {
         presenterScope.launch {
             try {
@@ -93,6 +94,7 @@ class PublishPresenter(
     }
 
     // Procesa la edición modificando los datos y enviándolos al repositorio
+    // NUEVO: Procesa la edición modificando los datos y enviándolos al repositorio
     override fun updatePet(
         id: String,
         name: String,

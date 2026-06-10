@@ -47,6 +47,10 @@ interface PublishContract {
         fun loadPetToEdit(petId: String)
 
         // Procesa la actualización de la mascota existente con los nuevos valores del formulario
+        // NUEVO: Solicita cargar una mascota desde el repositorio usando su ID (String por el UUID)
+        fun loadPetToEdit(petId: String)
+
+        // NUEVO: Procesa la actualización de la mascota existente con los nuevos valores del formulario
         fun updatePet(
             id: String,
             name: String,
