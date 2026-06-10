@@ -40,12 +40,14 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        // ACTUALIZADO: Cambiado de VERSION_1_8 a VERSION_11 para compatibilidad con coroutines-test y mockito
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        // ACTUALIZADO: Cambiado de '1.8' a '11' para emparejar el destino de la JVM
+        jvmTarget = '11'
     }
 
     buildFeatures {
@@ -61,6 +63,7 @@ dependencies {
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'io.coil-kt:coil:2.5.0'
+
     // --- Material Design ---
     implementation 'com.google.android.material:material:1.11.0'
 

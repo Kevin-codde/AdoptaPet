@@ -13,9 +13,16 @@ import java.util.UUID
 
 class PetRepository(
     private val petDao: PetDao,
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    private val injectedFirestore: FirebaseFirestore? = null,
+    private val injectedStorage: FirebaseStorage? = null
 ) {
+    // 🛡️ Propiedades protegidas: Si no se inyectan (producción), se inicializan al usarse.
+    // Si estamos en un test de Room y nadie las llama, Firebase NUNCA se ejecuta.
+    private val firestore: FirebaseFirestore
+        get() = injectedFirestore ?: FirebaseFirestore.getInstance()
+
+    private val storage: FirebaseStorage
+        get() = injectedStorage ?: FirebaseStorage.getInstance()
 
     companion object {
         private const val COLLECTION_PETS = "pets"
@@ -82,6 +89,7 @@ class PetRepository(
     suspend fun getPetById(petId: String): Pet? = petDao.getPetById(petId)
 
     /**
+     * Actualiza los datos de una mascota existente en Firebase y Room.
      * NUEVO: Actualiza los datos de una mascota existente en Firebase y Room.
      * Si photoUri es null, conserva la URL de la foto que ya tenía.
      */

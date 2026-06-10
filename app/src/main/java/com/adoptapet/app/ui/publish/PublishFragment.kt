@@ -61,6 +61,7 @@ class PublishFragment : Fragment(), PublishContract.View {
         setupSexDropdown()
         setupClickListeners()
 
+        // Se lee el argumento como String en lugar de Int
         // CORREGIDO: Se lee el argumento como String en lugar de Int
         editPetId = arguments?.getString("petId")
         if (editPetId != null) {
@@ -95,6 +96,7 @@ class PublishFragment : Fragment(), PublishContract.View {
             binding.tilDescription.error = null
             binding.tilContact.error = null
 
+            // Bifurcación usando la condición correcta para String?
             // CORREGIDO: Bifurcación usando la condición correcta para String?
             if (editPetId != null) {
                 presenter.updatePet(
@@ -200,6 +202,7 @@ class PublishFragment : Fragment(), PublishContract.View {
         binding.layoutAddPhoto.visibility = View.VISIBLE
         selectedPhotoUri = null
 
+        //  Resetear a null y restaurar texto original del botón
         // CORREGIDO: Resetear a null y restaurar texto original del botón
         editPetId = null
         binding.btnPublish.text = "PUBLICAR"

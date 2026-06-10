@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 /**
  * Presenter de autenticación.
  * Contiene TODA la lógica de negocio para login, registro y recuperación de contraseña.
+ * * NOTA: Se utiliza una expresión regular nativa para validar emails, evitando dependencias
+ * directas de 'android.util.Patterns' que rompen los entornos de pruebas unitarias locales (JVM).
  */
 class AuthPresenter(
     private var view: AuthContract.View?,
@@ -19,6 +21,11 @@ class AuthPresenter(
 ) : AuthContract.Presenter {
 
     private val presenterScope = CoroutineScope(Dispatchers.Main + Job())
+
+    companion object {
+        // Expresión regular estándar para validación de correos electrónicos compatible con JVM y Android
+        private val EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex()
+    }
 
     // ─── Login ────────────────────────────────────────────────────────────────
 
@@ -68,7 +75,7 @@ class AuthPresenter(
         if (email.isBlank()) {
             view?.showEmailError("El correo es obligatorio")
             return
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        } else if (!email.trim().matches(EMAIL_REGEX)) {
             view?.showEmailError("Correo electrónico inválido")
             return
         }
@@ -97,7 +104,7 @@ class AuthPresenter(
         if (email.isBlank()) {
             view?.showEmailError("El correo es obligatorio")
             isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        } else if (!email.trim().matches(EMAIL_REGEX)) {
             view?.showEmailError("Correo electrónico inválido")
             isValid = false
         }
@@ -124,7 +131,7 @@ class AuthPresenter(
         if (email.isBlank()) {
             view?.showEmailError("El correo es obligatorio")
             isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        } else if (!email.trim().matches(EMAIL_REGEX)) {
             view?.showEmailError("Correo electrónico inválido")
             isValid = false
         }

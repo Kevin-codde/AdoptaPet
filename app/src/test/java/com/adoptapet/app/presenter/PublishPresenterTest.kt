@@ -1,102 +1,188 @@
-// app/src/main/java/com/adoptapet/app/ui/presenter/PublishPresenter.kt
-package com.adoptapet.app.ui.presenter
+// app/src/test/java/com/adoptapet/app/presenter/PublishPresenterTest.kt
+package com.adoptapet.app.presenter
 
 import android.net.Uri
 import com.adoptapet.app.data.model.Pet
+import com.adoptapet.app.data.model.User
 import com.adoptapet.app.data.repository.AuthRepository
 import com.adoptapet.app.data.repository.PetRepository
 import com.adoptapet.app.ui.contracts.PublishContract
-import kotlinx.coroutines.CoroutineScope
+import com.adoptapet.app.ui.presenter.PublishPresenter
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import java.util.UUID // Importante para generar el ID manualmente ahora
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
-class PublishPresenter(
-    private var view: PublishContract.View?,
-    private val petRepository: PetRepository,
-    private val authRepository: AuthRepository = AuthRepository()
-) : PublishContract.Presenter {
+/**
+ * Pruebas unitarias corregidas para [PublishPresenter].
+ * Todos los entornos corren bajo 'runTest' para soportar funciones suspendidas.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class PublishPresenterTest {
 
-    private val presenterScope = CoroutineScope(Dispatchers.Main + Job())
+    private lateinit var mockView: PublishContract.View
+    private lateinit var mockPetRepository: PetRepository
+    private lateinit var mockAuthRepository: AuthRepository
+    private lateinit var mockFirebaseUser: FirebaseUser
+    private lateinit var mockUri: Uri
+    private lateinit var presenter: PublishPresenter
 
-    override fun publishPet(
-        name: String,
-        type: String,
-        age: String,
-        description: String,
-        contactInfo: String,
-        photoUri: Uri?
-    ) {
-        // Mantenemos la validación de campos
-        if (!validateFields(name, type, age, description, contactInfo, photoUri)) return
+    private val testDispatcher = StandardTestDispatcher()
 
-        val currentUser = authRepository.getCurrentFirebaseUser()
-        if (currentUser == null) {
-            view?.showError("Debes iniciar sesión para publicar")
-            return
-        }
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+        mockView = mock()
+        mockPetRepository = mock()
+        mockAuthRepository = mock()
+        mockFirebaseUser = mock()
+        mockUri = mock()
 
-        view?.showLoading(true)
-
-        presenterScope.launch {
-            try {
-                val userProfile = authRepository.getCurrentUserProfile()
-                val ownerName = userProfile?.name ?: currentUser.email ?: "Usuario"
-
-                // --- BAIPÁS DE STORAGE ---
-                // En lugar de usar photoUri (que requiere Storage), usamos una imagen real de internet
-                // Esta imagen se verá en la lista de mascotas de todos los que instalen la app.
-                val fakeImageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=1000"
-
-                val pet = Pet(
-                    id = UUID.randomUUID().toString(), // Generamos el ID aquí para saltar la lógica del Repo
-                    name = name.trim(),
-                    type = type.trim(),
-                    age = age.trim(),
-                    description = description.trim(),
-                    contactInfo = contactInfo.trim(),
-                    photoUrl = fakeImageUrl, // <--- AQUÍ PASAMOS LA URL DE INTERNET
-                    ownerId = currentUser.uid,
-                    ownerName = ownerName
-                )
-
-                // IMPORTANTE: Llamamos a una función que SOLO guarde en base de datos.
-                // Si tu petRepository no tiene una función simple, usaremos directamente Firestore.
-                // Pero lo ideal es que uses:
-                petRepository.publishPet(pet, null)
-                // Al pasar 'null' en photoUri, el repositorio debería ignorar el Storage
-                // y guardar solo el objeto 'pet' con nuestra fakeImageUrl.
-
-                view?.showLoading(false)
-                view?.showPublishSuccess()
-                view?.clearForm()
-
-            } catch (e: Exception) {
-                view?.showLoading(false)
-                view?.showError("Error al publicar: ${e.message}")
-            }
-        }
+        presenter = PublishPresenter(mockView, mockPetRepository, mockAuthRepository)
     }
 
-    private fun validateFields(
-        name: String, type: String, age: String,
-        description: String, contactInfo: String, photoUri: Uri?
-    ): Boolean {
-        var isValid = true
-        if (name.isBlank()) { view?.showFieldError("name", "Obligatorio"); isValid = false }
-        if (type.isBlank()) { view?.showFieldError("type", "Obligatorio"); isValid = false }
-        if (age.isBlank()) { view?.showFieldError("age", "Obligatorio"); isValid = false }
-        if (description.isBlank()) { view?.showFieldError("description", "Obligatorio"); isValid = false }
-        if (contactInfo.isBlank()) { view?.showFieldError("contactInfo", "Obligatorio"); isValid = false }
-
-        // Quitamos la validación obligatoria de foto por ahora para que no te bloquee
-        return isValid
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+        presenter.onDestroy()
     }
 
-    override fun onDestroy() {
-        presenterScope.cancel()
-        view = null
+    // ─── Tests de Publicación ─────────────────────────────────────────────────
+
+    @Test
+    fun `publishPet con campos vacios activa errores de validacion en la View`() = runTest {
+        // Act
+        presenter.publishPet("", "", "", "", "", "", "", mockUri)
+        advanceUntilIdle()
+
+        // Assert: Verifica que primero se limpie el error ("") y luego se muestre el texto real
+        verify(mockView).showFieldError("name", "")
+        verify(mockView).showFieldError("name", "El nombre es obligatorio")
+
+        verify(mockView).showFieldError("type", "")
+        verify(mockView).showFieldError("type", "Selecciona un tipo")
+
+        verify(mockView).showFieldError("sex", "")
+        verify(mockView).showFieldError("sex", "Selecciona el sexo")
+
+        verify(mockView).showFieldError("city", "")
+        verify(mockView).showFieldError("city", "La ciudad es obligatoria")
+
+        verify(mockView).showFieldError("age", "")
+        verify(mockView).showFieldError("age", "La edad es obligatoria")
+
+        verify(mockView).showFieldError("description", "")
+        verify(mockView).showFieldError("description", "La descripción es obligatoria")
+
+        verify(mockView).showFieldError("contactInfo", "")
+        verify(mockView).showFieldError("contactInfo", "El contacto es obligatorio")
+
+        // El repositorio jamás debió ser contactado
+        verify(mockPetRepository, never()).publishPet(any(), any())
+    }
+
+    @Test
+    fun `publishPet sin foto lanza error inmediato`() = runTest {
+        // Act
+        presenter.publishPet("Max", "Perro", "Macho", "2 años", "Bogotá", "Lindo", "12345", null)
+        advanceUntilIdle()
+
+        // Assert
+        verify(mockView).showError("Por favor selecciona una foto de la mascota")
+        verify(mockPetRepository, never()).publishPet(any(), any())
+    }
+
+    @Test
+    fun `publishPet sin sesion activa no permite guardar y pide login`() = runTest {
+        // Arrange
+        whenever(mockAuthRepository.getCurrentFirebaseUser()).thenReturn(null)
+
+        // Act
+        presenter.publishPet("Max", "Perro", "Macho", "2 años", "Bogotá", "Lindo", "12345", mockUri)
+        advanceUntilIdle()
+
+        // Assert
+        verify(mockView).showError("Debes iniciar sesión para publicar")
+        verify(mockPetRepository, never()).publishPet(any(), any())
+    }
+
+    @Test
+    fun `publishPet exitoso coordina con el repositorio y limpia formulario`() = runTest {
+        // Arrange
+        whenever(mockAuthRepository.getCurrentFirebaseUser()).thenReturn(mockFirebaseUser)
+        whenever(mockFirebaseUser.uid).thenReturn("uid-123")
+        whenever(mockFirebaseUser.email).thenReturn("test@user.com")
+        whenever(mockAuthRepository.getCurrentUserProfile()).thenReturn(User("uid-123", "Juan", "test@user.com"))
+
+        // Act
+        presenter.publishPet("Max", "Perro", "Macho", "2 años", "Bogotá", "Lindo", "12345", mockUri)
+        advanceUntilIdle()
+
+        // Assert
+        verify(mockView).showLoading(true)
+        verify(mockPetRepository).publishPet(any(), eq(mockUri))
+        verify(mockView).showLoading(false)
+        verify(mockView).showPublishSuccess()
+        verify(mockView).clearForm()
+    }
+
+    // ─── Tests de Edición y Carga ─────────────────────────────────────────────
+
+    @Test
+    fun `loadPetToEdit encuentra la mascota y rellena la UI`() = runTest {
+        // Arrange
+        val pet = Pet("id-pet-99", "Luna", "Gato", "Hembra", "1 año", "Medellín", "Cariñosa", "555", "uid-123", "Juan")
+        whenever(mockPetRepository.getPetById("id-pet-99")).thenReturn(pet)
+
+        // Act
+        presenter.loadPetToEdit("id-pet-99")
+        advanceUntilIdle()
+
+        // Assert
+        verify(mockView).showPetDataForEdit(pet)
+    }
+
+    @Test
+    fun `loadPetToEdit con id inexistente gatilla mensaje de error`() = runTest {
+        // Arrange
+        whenever(mockPetRepository.getPetById("id-falso")).thenReturn(null)
+
+        // Act
+        presenter.loadPetToEdit("id-falso")
+        advanceUntilIdle()
+
+        // Assert
+        verify(mockView).showError("No se pudo encontrar la información de la mascota")
+    }
+
+    @Test
+    fun `updatePet exitoso realiza la modificacion y avisa a la vista`() = runTest {
+        // Arrange
+        val existingPet = Pet("id-123", "Max", "Perro", "Macho", "2 años", "Bogotá", "Lindo", "123", "uid-123", "Juan")
+        whenever(mockPetRepository.getPetById("id-123")).thenReturn(existingPet)
+
+        // Act
+        presenter.updatePet("id-123", "Max Editado", "Perro", "Macho", "3 años", "Cali", "Muy Lindo", "123", mockUri)
+        advanceUntilIdle()
+
+        // Assert
+        verify(mockView).showLoading(true)
+        verify(mockPetRepository).updatePet(any(), eq(mockUri))
+        verify(mockView).showLoading(false)
+        verify(mockView).showPublishSuccess()
+        verify(mockView).clearForm()
     }
 }
